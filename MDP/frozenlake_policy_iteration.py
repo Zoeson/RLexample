@@ -61,7 +61,9 @@ def compute_policy_v(env, policy, gamma=1.0):
                 # s_: 下一个状态, 下一个状态的value:prev_v[s_]
                 q_sa = r + gamma * prev_v[s_]
                 # v_π_s = 所有a属于A, π(a|s) * q(s,a)
-                v[s] += p * q_sa  # p是在s下采取a的概率? 或者p是从状态s转移到状态s_的概率？！！
+                # Q:p是在s下采取a的概率? 或者p是从状态s转移到状态s_的概率？
+                v[s] += p * q_sa  
+                # A:在这个里面，action,就是表示从一个位置（state）到另一个位置（state）, 所有，π(a|s)既是s下采取a行动的概率，也即s下去到另一个state的概率
         if np.sum((np.fabs(prev_v - v))) <= eps:
             # value converged
             break
@@ -92,9 +94,13 @@ if __name__ == '__main__':
     
    
 """
+s_ == 15时，r == 1,
+s_ == 其它，r == 0
+s_、s 在frozenLake里表示位置，相当于课程中的state状态， prev_v[s_]是当前位置的value值， 通过不断更新v, prev_v=np.copy(v)不断更新prev_v
 'P': {
 0: {
    0: [
+     p,                  s_, r,    _,
     (0.3333333333333333, 0, 0.0, False),
     (0.3333333333333333, 0, 0.0, False),
     (0.3333333333333333, 4, 0.0, False)],
