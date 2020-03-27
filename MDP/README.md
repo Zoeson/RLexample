@@ -1,8 +1,6 @@
 ## 0326 结合周博磊的视频，通过程序的实现步骤，增加对policy_iteration和value_iteration的理解
 背景：FrozenLake-v0，env.env.nA=4, env.env.nS=16, 4个action， 16个状态
 
-### policy_iteration
-
 ### value_iteration
 evalue:用bellman optimal equation直接更新v*,
 policy:用greedy(v*)--> policy
@@ -79,11 +77,92 @@ for i in range(max_iteration):
     
     # s状态下，采取action a之后（即到了另一个状态，
     # 比如当前s=位置3，采取action a（(0.3333333333333333, 1, 0.0, False),）到了位置3），有3个可能状态
-    
-    
-### 我的问题：
+ 
+## 0327 进一步理解
+### policy_iteration
+    扩展：env.env.P,是个什么样的存在？在FrozenLake里，只给了p(s'|s,a), 没有给π(a|s):
 
+            env.env.P[s][a]:
+                   s=1: {
+                     a=0: [  p               s_  r
+                        (0.3333333333333333, 1, 0.0, False),
+                        (0.3333333333333333, 0, 0.0, False),
+                        (0.3333333333333333, 5, 0.0, True)],
+                     a=1: [
+                        (0.3333333333333333, 0, 0.0, False),
+                        (0.3333333333333333, 5, 0.0, True),
+                        (0.3333333333333333, 2, 0.0, False)],
+                     a=2: [
+                        (0.3333333333333333, 5, 0.0, True),
+                        (0.3333333333333333, 2, 0.0, False),
+                        (0.3333333333333333, 1, 0.0, False)],
+                     a=3: [
+                        (0.3333333333333333, 2, 0.0, False),
+                        (0.3333333333333333, 1, 0.0, False),
+                        (0.3333333333333333, 0, 0.0, False)]},
+
+
+                    s=0-15分别表示16个位置，a=0-3分别表示：上、下、左、右
+                    s状态下，采取action a之后，可能到到另外一些状态，s'<S，
+                    比如当前s=位置1，采取action a=0(可能是‘上’），可以 以一定的概率转移到3个可能状态（s_=1,0,5，v[1], v[0],v[5]分别为对应的v(s')），
+                    q_sa = R_sa + gamma*sum(所有s'下：p(s'|s,a) * v(s'))  (s_即为 s')
+
+                    q(s1, a0):    q_sa(s=1,a=0):
+                        s == 1, a == 0之后（’上‘）,以p的概率，转移到s_的三种状态[1,0,5]
+
+                         R_sa + gamma*sum(所有s'下：p(s'|s,a) * v(s'))
+                        = P(s_1|s,a)*r1 + P(s_2|s,a)*r2 + P(s_3|s,a)*r3  +
+                            gamma * {P(s_1|s,a)*v(s_1) + P(s_2|s,a)*v(s_2) + P(s_3|s,a)*v(s_3)}
+                        = P(s_1|s,a)(r1 + gamma*v(s_1) + P(s_2|s,a)(r2 + gamma*v(s_2) + P(s_3|s,a)(r3 + gamma*v(s_3)
+
+                        即： q_sa = 三个tuple里的 p*(r + gamma*v[s_]) 求和
+                                ###
+                                s_ == 1 时，reward=0,  p * (0 + gamma * prev_v[1])
+                                s_ == 0 时，reward=0,  p * (0 + gamma * prev_v[0])
+                                s_ == 5 时，reward=0,  p * (0 + gamma * prev_v[5])
+                                ###
+
+                    q(s1, a1):  q_sa[s=1, a=1]
+                    q(s1, a2):  q_sa[s=1, a=2]
+                    q(s1, a3):  q_sa[s=1, a=3]
+                v(s1) = π(a0|s1) * q(s1,a0) + π(a1|s1) * q(s1,a1) + π(a2|s1) * q(s1,a2) + π(a3|s1) * q(s1,a3)
+                v(s2) = π(a0|s2) * q(s2,a0) + π(a1|s2) * q(s2,a1) + π(a2|s2) * q(s2,a2) + π(a3|s2) * q(s2,a3)
+                v(s3) = π(a0|s3) * q(s3,a0) + π(a1|s3) * q(s3,a1) + π(a2|s3) * q(s3,a2) + π(a3|s3) * q(s3,a3)
+                v(s4) = π(a0|s4) * q(s4,a0) + π(a1|s4) * q(s4,a1) + π(a2|s4) * q(s4,a2) + π(a3|s4) * q(s4,a3)
+                ...
+                ...
+                ...
+                v(s15) = π(a0|s15)*q(s15,a0) + π(a1|s15)*q(s15,a1) + π(a2|s15)*q(s15,a2) + π(a3|s15)*q(s15,a3)
+"""
+    
+## 问题跟新
+### 0326
 P(s'|s,a),  π(a|s),  π(a'|s')在FrozenLake_v0这个情景汇总，分别指的是什么
+### 0327
+    Q1:位置等于状态吗？
+    A1:好像是， 从一个位置到另一个位置的概率为p，在程序里的表示好像就是 s-->s_
+
+    Q2:policy到底是什么？
+    A2:1. policy是指(当前时刻下\当次迭代时)每个状态对应的，具体要采取的action, for example: FrozenLake-v0 (4*4的棋盘)：
+            有（s0, s1, s2, ..., s15）共16个位置（即状态）, 有对应的 [v0, v1, v2, ..., v15],16个位置的state-value
+            policy为[a_s0=l, a_s1=r, a_s2=d, a_s3=d, a_s4=u, ..., a_s15=d], 即[l, r, d, d, u, ..., d]
+       2. MDP就是为了找 v* (optimal value_state) 以及对应的 π*(a|s): optimal policy, v*是至少对应一个optimal policy
+       3. 概念：
+           p(s'|s,a): s下，采取a转移到s'的概率？
+           π(a|s):   s下，采取a的概率？
+           π*(a|s):  s下，最优的a?
+
+    Q3:P_a是dynamic\transmit model for each action?这句话怎么理解
+    A3:
+
+    Q4:为什么不断重复当前固定的policy, 各个状态就等得到稳定的v?
+    A4:
+
+    Q5：哪些值是确定的？哪些是不定的
+    A5: p是确定的，r是确定的， s_是确定的， π(a|s)也是确定的？
+        只有v(s_)是不确定的
+
+
 ## Solving FrozenLake using Policy Iteration and Value Iteration
 
 ## Introduction
