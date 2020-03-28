@@ -149,7 +149,7 @@ P(s'|s,a),  π(a|s),  π(a'|s')在FrozenLake_v0这个情景汇总，分别指的
        2. MDP就是为了找 v* (optimal value_state) 以及对应的 π*(a|s): optimal policy, v*是至少对应一个optimal policy
        3. 概念：
            p(s'|s,a): s下，采取a转移到s'的概率？
-           π(a|s):   s下，采取a的概率？
+           **π(a|s):   处于环境状态s时，智能体在策略π下采取动作a的概率**
            π*(a|s):  s下，最优的a?
 
     Q3:P_a是dynamic\transmit model for each action?这句话怎么理解
